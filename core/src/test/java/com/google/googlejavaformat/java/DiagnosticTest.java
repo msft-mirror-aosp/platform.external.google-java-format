@@ -23,6 +23,7 @@ import java.io.IOException;
 import java.io.InputStream;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Locale;
@@ -97,7 +98,8 @@ public class DiagnosticTest {
 
     int result = main.format(path.toString());
     assertThat(stdout.toString()).isEmpty();
-    assertThat(stderr.toString()).contains("error: illegal unicode escape");
+    assertThat(stderr.toString())
+        .contains("InvalidSyntax.java:1:35: error: illegal unicode escape");
     assertThat(result).isEqualTo(1);
   }
 
@@ -154,7 +156,7 @@ public class DiagnosticTest {
 
     Path tmpdir = testFolder.newFolder().toPath();
     Path path = tmpdir.resolve("A.java");
-    Files.write(path, input.getBytes(UTF_8));
+    Files.write(path, input.getBytes(StandardCharsets.UTF_8));
 
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
@@ -171,7 +173,7 @@ public class DiagnosticTest {
   public void parseErrorStdin() throws FormatterException, IOException, UsageException {
     String input = "class Foo { void f() {\n g() } }";
 
-    InputStream inStream = new ByteArrayInputStream(input.getBytes(UTF_8));
+    InputStream inStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
     Main main = new Main(new PrintWriter(out, true), new PrintWriter(err, true), inStream);
@@ -188,7 +190,7 @@ public class DiagnosticTest {
 
     Path tmpdir = testFolder.newFolder().toPath();
     Path path = tmpdir.resolve("A.java");
-    Files.write(path, input.getBytes(UTF_8));
+    Files.write(path, input.getBytes(StandardCharsets.UTF_8));
 
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
@@ -204,7 +206,7 @@ public class DiagnosticTest {
   @Test
   public void lexErrorStdin() throws FormatterException, IOException, UsageException {
     String input = "class Foo { void f() {\n g('foo'); } }";
-    InputStream inStream = new ByteArrayInputStream(input.getBytes(UTF_8));
+    InputStream inStream = new ByteArrayInputStream(input.getBytes(StandardCharsets.UTF_8));
     StringWriter out = new StringWriter();
     StringWriter err = new StringWriter();
     Main main = new Main(new PrintWriter(out, true), new PrintWriter(err, true), inStream);
