@@ -5,7 +5,7 @@ class Test {
     if (!metadata.ignoreOutputTransformations()
         && Producers.isListenableFutureMapKey(outputKey)) {
       ImmutableList<ProducerNode<?>> nodes = createMapNodes((ProducerNode) node);
-      checkCollectionNodesAgainstAllowlist(nodes, allowlist);
+      checkCollectionNodesAgainstWhitelist(nodes, whitelist);
       return nodes;
 
     } else if (!metadata.ignoreOutputTransformations()
