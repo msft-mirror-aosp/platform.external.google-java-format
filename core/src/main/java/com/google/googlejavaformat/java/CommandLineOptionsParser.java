@@ -54,7 +54,7 @@ final class CommandLineOptionsParser {
       int idx = option.indexOf('=');
       if (idx >= 0) {
         flag = option.substring(0, idx);
-        value = option.substring(idx + 1);
+        value = option.substring(idx + 1, option.length());
       } else {
         flag = option;
         value = null;

@@ -52,7 +52,7 @@ public class FormattingFilerTest {
         new Messager() {
           @Override
           public void printMessage(javax.tools.Diagnostic.Kind kind, CharSequence msg) {
-            logMessages.add(kind + ";" + msg);
+            logMessages.add(kind.toString() + ";" + msg);
           }
 
           @Override
@@ -73,9 +73,9 @@ public class FormattingFilerTest {
 
     String file = Joiner.on('\n').join("package foo;", "public class Bar {");
     FormattingFiler formattingFiler = new FormattingFiler(new FakeFiler(), messager);
-    try (Writer writer = formattingFiler.createSourceFile("foo.Bar").openWriter()) {
-      writer.write(file);
-    }
+    Writer writer = formattingFiler.createSourceFile("foo.Bar").openWriter();
+    writer.write(file);
+    writer.close();
 
     assertThat(logMessages).containsExactly("NOTE;Error formatting foo.Bar");
   }

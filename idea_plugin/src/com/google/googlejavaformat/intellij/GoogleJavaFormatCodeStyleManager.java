@@ -22,21 +22,18 @@ import com.google.common.collect.ImmutableList;
 import com.google.googlejavaformat.java.Formatter;
 import com.google.googlejavaformat.java.JavaFormatterOptions;
 import com.google.googlejavaformat.java.JavaFormatterOptions.Style;
-import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 import java.util.Map.Entry;
 import java.util.TreeMap;
@@ -44,7 +41,7 @@ import org.jetbrains.annotations.NotNull;
 
 /**
  * A {@link CodeStyleManager} implementation which formats .java files with google-java-format.
- * Formatting of all other types of files is delegated to IntelliJ's default implementation.
+ * Formatting of all other types of files is delegated to IJ's default implementation.
  */
 class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
 
@@ -53,7 +50,7 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, int startOffset, int endOffset)
+  public void reformatText(PsiFile file, int startOffset, int endOffset)
       throws IncorrectOperationException {
     if (overrideFormatterForFile(file)) {
       formatInternal(file, ImmutableList.of(new TextRange(startOffset, endOffset)));
@@ -63,7 +60,7 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
   }
 
   @Override
-  public void reformatText(@NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges)
+  public void reformatText(PsiFile file, Collection<TextRange> ranges)
       throws IncorrectOperationException {
     if (overrideFormatterForFile(file)) {
       formatInternal(file, ranges);
@@ -73,19 +70,7 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
   }
 
   @Override
-  public void reformatTextWithContext(@NotNull PsiFile file, @NotNull ChangedRangesInfo info)
-      throws IncorrectOperationException {
-    List<TextRange> ranges = new ArrayList<>();
-    if (info.insertedRanges != null) {
-      ranges.addAll(info.insertedRanges);
-    }
-    ranges.addAll(info.allChangedRanges);
-    reformatTextWithContext(file, ranges);
-  }
-
-  @Override
-  public void reformatTextWithContext(
-      @NotNull PsiFile file, @NotNull Collection<? extends TextRange> ranges) {
+  public void reformatTextWithContext(PsiFile file, Collection<TextRange> ranges) {
     if (overrideFormatterForFile(file)) {
       formatInternal(file, ranges);
     } else {
@@ -95,10 +80,7 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
 
   @Override
   public PsiElement reformatRange(
-      @NotNull PsiElement element,
-      int startOffset,
-      int endOffset,
-      boolean canChangeWhiteSpacesOnly) {
+      PsiElement element, int startOffset, int endOffset, boolean canChangeWhiteSpacesOnly) {
     // Only handle elements that are PsiFile for now -- otherwise we need to search for some
     // element within the file at new locations given the original startOffset and endOffsets
     // to serve as the return value.
@@ -111,13 +93,13 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
     }
   }
 
-  /** Return whether this formatter can handle formatting the given file. */
+  /** Return whether or not this formatter can handle formatting the given file. */
   private boolean overrideFormatterForFile(PsiFile file) {
-    return JavaFileType.INSTANCE.equals(file.getFileType())
+    return StdFileTypes.JAVA.equals(file.getFileType())
         && GoogleJavaFormatSettings.getInstance(getProject()).isEnabled();
   }
 
-  private void formatInternal(PsiFile file, Collection<? extends TextRange> ranges) {
+  private void formatInternal(PsiFile file, Collection<TextRange> ranges) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     documentManager.commitAllDocuments();
@@ -141,9 +123,9 @@ class GoogleJavaFormatCodeStyleManager extends CodeStyleManagerDecorator {
    * Format the ranges of the given document.
    *
    * <p>Overriding methods will need to modify the document with the result of the external
-   * formatter (usually using {@link #performReplacements(Document, Map)}).
+   * formatter (usually using {@link #performReplacements(Document, Map)}.
    */
-  private void format(Document document, Collection<? extends TextRange> ranges) {
+  private void format(Document document, Collection<TextRange> ranges) {
     Style style = GoogleJavaFormatSettings.getInstance(getProject()).getStyle();
     Formatter formatter = new Formatter(JavaFormatterOptions.builder().style(style).build());
     performReplacements(
