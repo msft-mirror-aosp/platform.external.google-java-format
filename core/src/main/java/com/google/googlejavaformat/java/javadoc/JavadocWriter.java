@@ -15,7 +15,6 @@
 package com.google.googlejavaformat.java.javadoc;
 
 import static com.google.common.base.Preconditions.checkNotNull;
-import static com.google.common.collect.Comparators.max;
 import static com.google.common.collect.Sets.immutableEnumSet;
 import static com.google.googlejavaformat.java.javadoc.JavadocWriter.AutoIndent.AUTO_INDENT;
 import static com.google.googlejavaformat.java.javadoc.JavadocWriter.AutoIndent.NO_AUTO_INDENT;
@@ -27,7 +26,9 @@ import static com.google.googlejavaformat.java.javadoc.Token.Type.HEADER_OPEN_TA
 import static com.google.googlejavaformat.java.javadoc.Token.Type.LIST_ITEM_OPEN_TAG;
 import static com.google.googlejavaformat.java.javadoc.Token.Type.PARAGRAPH_OPEN_TAG;
 
+import com.google.common.base.Strings;
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Ordering;
 import com.google.googlejavaformat.java.javadoc.Token.Type;
 
 /**
@@ -269,7 +270,8 @@ final class JavadocWriter {
   }
 
   private void requestWhitespace(RequestedWhitespace requestedWhitespace) {
-    this.requestedWhitespace = max(requestedWhitespace, this.requestedWhitespace);
+    this.requestedWhitespace =
+        Ordering.natural().max(requestedWhitespace, this.requestedWhitespace);
   }
 
   /**
@@ -394,7 +396,7 @@ final class JavadocWriter {
 
   // If this is a hotspot, keep a String of many spaces around, and call append(string, start, end).
   private void appendSpaces(int count) {
-    output.append(" ".repeat(count));
+    output.append(Strings.repeat(" ", count));
   }
 
   /**

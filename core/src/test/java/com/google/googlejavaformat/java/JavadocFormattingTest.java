@@ -937,9 +937,7 @@ public final class JavadocFormattingTest {
       "class Test {}",
     };
     String[] expected = {
-      "/**", //
-      " * @param this is a param",
-      " */",
+      "/** @param this is a param */", //
       "class Test {}",
     };
     doFormatTest(input, expected);
@@ -1412,35 +1410,6 @@ public final class JavadocFormattingTest {
       "  /**",
       "   * \u2028 Set and enable something.",
       "   */",
-      "  public void setSomething() {}",
-      "}",
-    };
-    doFormatTest(input, expected);
-  }
-
-  @Test
-  public void missingSummaryFragment() {
-    String[] input = {
-      "public class Foo {",
-      "  /**",
-      "   * @return something.",
-      "   */",
-      "  public void setSomething() {}",
-      "",
-      "  /**",
-      "   * @hide",
-      "   */",
-      "  public void setSomething() {}",
-      "}",
-    };
-    String[] expected = {
-      "public class Foo {",
-      "  /**",
-      "   * @return something.",
-      "   */",
-      "  public void setSomething() {}",
-      "",
-      "  /** @hide */",
       "  public void setSomething() {}",
       "}",
     };
