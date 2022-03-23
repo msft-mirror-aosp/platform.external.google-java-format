@@ -14,7 +14,8 @@
 
 package com.google.googlejavaformat.java;
 
-import static com.google.common.collect.MoreCollectors.toOptional;
+import static com.google.common.base.StandardSystemProperty.JAVA_CLASS_VERSION;
+import static com.google.common.base.StandardSystemProperty.JAVA_SPECIFICATION_VERSION;
 import static com.google.common.io.Files.getFileExtension;
 import static com.google.common.io.Files.getNameWithoutExtension;
 import static java.nio.charset.StandardCharsets.UTF_8;
@@ -22,7 +23,7 @@ import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 
-import com.google.common.collect.ImmutableMultimap;
+import com.google.common.collect.ImmutableSet;
 import com.google.common.io.CharStreams;
 import com.google.common.reflect.ClassPath;
 import com.google.common.reflect.ClassPath.ResourceInfo;
@@ -30,12 +31,12 @@ import com.google.googlejavaformat.Newlines;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.lang.reflect.Method;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.Optional;
 import java.util.TreeMap;
 import org.junit.Test;
 import org.junit.runner.RunWith;
@@ -46,13 +47,8 @@ import org.junit.runners.Parameterized.Parameters;
 @RunWith(Parameterized.class)
 public class FormatterIntegrationTest {
 
-  private static final ImmutableMultimap<Integer, String> VERSIONED_TESTS =
-      ImmutableMultimap.<Integer, String>builder()
-          .putAll(14, "I477", "Records", "RSLs", "Var", "ExpressionSwitch", "I574", "I594")
-          .putAll(15, "I603")
-          .putAll(16, "I588")
-          .putAll(17, "I683", "I684", "I696")
-          .build();
+  private static final ImmutableSet<String> JAVA14_TESTS =
+      ImmutableSet.of("I477", "Records", "RSLs", "Var", "ExpressionSwitch");
 
   @Parameters(name = "{index}: {0}")
   public static Iterable<Object[]> data() throws IOException {
@@ -80,7 +76,7 @@ public class FormatterIntegrationTest {
           case "output":
             outputs.put(baseName, contents);
             break;
-          default: // fall out
+          default:
         }
       }
     }
@@ -91,14 +87,27 @@ public class FormatterIntegrationTest {
       String input = inputs.get(fileName);
       assertTrue("unmatched input", outputs.containsKey(fileName));
       String expectedOutput = outputs.get(fileName);
-      Optional<Integer> version =
-          VERSIONED_TESTS.inverse().get(fileName).stream().collect(toOptional());
-      if (version.isPresent() && Runtime.version().feature() < version.get()) {
+      if (JAVA14_TESTS.contains(fileName) && getMajor() < 14) {
         continue;
       }
       testInputs.add(new Object[] {fileName, input, expectedOutput});
     }
     return testInputs;
+  }
+
+  private static int getMajor() {
+    try {
+      Method versionMethod = Runtime.class.getMethod("version");
+      Object version = versionMethod.invoke(null);
+      return (int) version.getClass().getMethod("major").invoke(version);
+    } catch (Exception e) {
+      // continue below
+    }
+    int version = (int) Double.parseDouble(JAVA_CLASS_VERSION.value());
+    if (49 <= version && version <= 52) {
+      return version - (49 - 5);
+    }
+    throw new IllegalStateException("Unknown Java version: " + JAVA_SPECIFICATION_VERSION.value());
   }
 
   private final String name;
@@ -116,9 +125,7 @@ public class FormatterIntegrationTest {
   @Test
   public void format() {
     try {
-      Formatter formatter = new Formatter();
-      String output = formatter.formatSource(input);
-      output = StringWrapper.wrap(output, formatter);
+      String output = new Formatter().formatSource(input);
       assertEquals("bad output for " + name, expected, output);
     } catch (FormatterException e) {
       fail(String.format("Formatter crashed on %s: %s", name, e.getMessage()));

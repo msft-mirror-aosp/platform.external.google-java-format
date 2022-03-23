@@ -9,7 +9,7 @@ import com.google.common.collect.Lists;
  */
 @MarkerAnnotation
 class E<T> {
-  // TODO(user): Test higher language-level features.
+  // TODO(jdd): Test higher language-level features.
 
   enum Enum1 {
     A,
