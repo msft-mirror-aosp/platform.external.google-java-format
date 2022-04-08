@@ -1,5 +1,7 @@
 name: "google-java-format"
-description: "Reformats Java source code to comply with Google Java Style."
+description:
+    "Reformats Java source code to comply with Google Java Style."
+
 third_party {
   url {
     type: HOMEPAGE
@@ -9,11 +11,7 @@ third_party {
     type: GIT
     value: "https://github.com/google/google-java-format"
   }
-  version: "google-java-format-1.9"
+  version: "google-java-format-1.8"
+  last_upgrade_date { year: 2020 month: 6 day: 12 }
   license_type: NOTICE
-  last_upgrade_date {
-    year: 2020
-    month: 9
-    day: 23
-  }
 }
