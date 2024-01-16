@@ -39,6 +39,7 @@ filegroup {
     name: "google_java_format_main_srcs",
     srcs: [
         "core/src/main/java/com/google/googlejavaformat/java/Main.java",
+        "core/src/main/java/com/google/googlejavaformat/java/GoogleJavaFormatTool.java",
         "core/src/main/java/com/google/googlejavaformat/java/UsageException.java",
     ],
 }
