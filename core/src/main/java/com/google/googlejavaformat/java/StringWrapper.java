@@ -15,6 +15,7 @@
 package com.google.googlejavaformat.java;
 
 import static com.google.common.collect.Iterables.getLast;
+import static java.lang.Math.min;
 import static java.nio.charset.StandardCharsets.UTF_8;
 import static java.util.stream.Collectors.joining;
 
@@ -96,7 +97,9 @@ public final class StringWrapper {
       if (!expected.equals(actual)) {
         throw new FormatterException(
             String.format(
-                "Something has gone terribly wrong. Please file a bug: "
+                "Something has gone terribly wrong. We planned to make the below formatting change,"
+                    + " but have aborted because it would unexpectedly change the AST.\n"
+                    + "Please file a bug: "
                     + "https://github.com/google/google-java-format/issues/new"
                     + "\n\n=== Actual: ===\n%s\n=== Expected: ===\n%s\n",
                 actual, expected));
@@ -118,6 +121,10 @@ public final class StringWrapper {
       @Override
       public Void visitLiteral(LiteralTree literalTree, Void aVoid) {
         if (literalTree.getKind() != Kind.STRING_LITERAL) {
+          return null;
+        }
+        int pos = getStartPosition(literalTree);
+        if (input.substring(pos, min(input.length(), pos + 3)).equals("\"\"\"")) {
           return null;
         }
         Tree parent = getCurrentPath().getParentPath().getLeaf();
@@ -396,7 +403,7 @@ public final class StringWrapper {
     ParserFactory parserFactory = ParserFactory.instance(context);
     JavacParser parser =
         parserFactory.newParser(
-            source, /*keepDocComments=*/ true, /*keepEndPos=*/ true, /*keepLineMap=*/ true);
+            source, /* keepDocComments= */ true, /* keepEndPos= */ true, /* keepLineMap= */ true);
     unit = parser.parseCompilationUnit();
     unit.sourcefile = sjfo;
     Iterable<Diagnostic<? extends JavaFileObject>> errorDiagnostics =
