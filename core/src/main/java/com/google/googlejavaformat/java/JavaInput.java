@@ -49,6 +49,7 @@ import java.util.List;
 import javax.tools.Diagnostic;
 import javax.tools.DiagnosticCollector;
 import javax.tools.DiagnosticListener;
+import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.SimpleJavaFileObject;
@@ -349,7 +350,8 @@ public final class JavaInput extends Input {
     stopTokens = ImmutableSet.<TokenKind>builder().addAll(stopTokens).add(TokenKind.EOF).build();
     Context context = new Context();
     Options.instance(context).put("--enable-preview", "true");
-    new JavacFileManager(context, true, UTF_8);
+    JavaFileManager fileManager = new JavacFileManager(context, false, UTF_8);
+    context.put(JavaFileManager.class, fileManager);
     DiagnosticCollector<JavaFileObject> diagnosticCollector = new DiagnosticCollector<>();
     context.put(DiagnosticListener.class, diagnosticCollector);
     Log log = Log.instance(context);
@@ -385,7 +387,14 @@ public final class JavaInput extends Input {
       final boolean isNumbered; // Is this tok numbered? (tokens and comments)
       String extraNewline = null; // Extra newline at end?
       List<String> strings = new ArrayList<>();
-      if (Character.isWhitespace(tokText0)) {
+      if (tokText.startsWith("'")
+          || tokText.startsWith("\"")
+          || JavacTokens.isStringFragment(t.kind())) {
+        // Perform this check first, STRINGFRAGMENT tokens can start with arbitrary characters.
+        isToken = true;
+        isNumbered = true;
+        strings.add(originalTokText);
+      } else if (Character.isWhitespace(tokText0)) {
         isToken = false;
         isNumbered = false;
         Iterator<String> it = Newlines.lineIterator(originalTokText);
@@ -402,10 +411,6 @@ public final class JavaInput extends Input {
             strings.add(line);
           }
         }
-      } else if (tokText.startsWith("'") || tokText.startsWith("\"")) {
-        isToken = true;
-        isNumbered = true;
-        strings.add(originalTokText);
       } else if (tokText.startsWith("//") || tokText.startsWith("/*")) {
         // For compatibility with an earlier lexer, the newline after a // comment is its own tok.
         if (tokText.startsWith("//")
