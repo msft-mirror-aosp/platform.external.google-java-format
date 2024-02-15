@@ -136,9 +136,9 @@ public final class Formatter {
     JavacParser parser =
         parserFactory.newParser(
             javaInput.getText(),
-            /*keepDocComments=*/ true,
-            /*keepEndPos=*/ true,
-            /*keepLineMap=*/ true);
+            /* keepDocComments= */ true,
+            /* keepEndPos= */ true,
+            /* keepLineMap= */ true);
     unit = parser.parseCompilationUnit();
     unit.sourcefile = source;
 
@@ -151,16 +151,14 @@ public final class Formatter {
     OpsBuilder builder = new OpsBuilder(javaInput, javaOutput);
     // Output the compilation unit.
     JavaInputAstVisitor visitor;
-    if (Runtime.version().feature() >= 14) {
-      try {
-        visitor =
-            Class.forName("com.google.googlejavaformat.java.java14.Java14InputAstVisitor")
-                .asSubclass(JavaInputAstVisitor.class)
-                .getConstructor(OpsBuilder.class, int.class)
-                .newInstance(builder, options.indentationMultiplier());
-      } catch (ReflectiveOperationException e) {
-        throw new LinkageError(e.getMessage(), e);
-      }
+    if (Runtime.version().feature() >= 21) {
+      visitor =
+          createVisitor(
+              "com.google.googlejavaformat.java.java21.Java21InputAstVisitor", builder, options);
+    } else if (Runtime.version().feature() >= 17) {
+      visitor =
+          createVisitor(
+              "com.google.googlejavaformat.java.java17.Java17InputAstVisitor", builder, options);
     } else {
       visitor = new JavaInputAstVisitor(builder, options.indentationMultiplier());
     }
@@ -171,6 +169,18 @@ public final class Formatter {
     doc.computeBreaks(javaOutput.getCommentsHelper(), MAX_LINE_LENGTH, new Doc.State(+0, 0));
     doc.write(javaOutput);
     javaOutput.flush();
+  }
+
+  private static JavaInputAstVisitor createVisitor(
+      final String className, final OpsBuilder builder, final JavaFormatterOptions options) {
+    try {
+      return Class.forName(className)
+          .asSubclass(JavaInputAstVisitor.class)
+          .getConstructor(OpsBuilder.class, int.class)
+          .newInstance(builder, options.indentationMultiplier());
+    } catch (ReflectiveOperationException e) {
+      throw new LinkageError(e.getMessage(), e);
+    }
   }
 
   static boolean errorDiagnostic(Diagnostic<?> input) {
@@ -262,7 +272,9 @@ public final class Formatter {
     // TODO(cushon): this is only safe because the modifier ordering doesn't affect whitespace,
     // and doesn't change the replacements that are output. This is not true in general for
     // 'de-linting' changes (e.g. import ordering).
-    javaInput = ModifierOrderer.reorderModifiers(javaInput, characterRanges);
+    if (options.reorderModifiers()) {
+      javaInput = ModifierOrderer.reorderModifiers(javaInput, characterRanges);
+    }
 
     String lineSeparator = Newlines.guessLineSeparator(input);
     JavaOutput javaOutput =

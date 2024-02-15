@@ -285,7 +285,10 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
     ImmutableSetMultimap.Builder<String, String> result = ImmutableSetMultimap.builder();
     for (String annotation :
         ImmutableList.of(
+            "org.jspecify.annotations.NonNull",
+            "org.jspecify.annotations.Nullable",
             "org.jspecify.nullness.Nullable",
+            "org.checkerframework.checker.nullness.qual.NonNull",
             "org.checkerframework.checker.nullness.qual.Nullable")) {
       String simpleName = annotation.substring(annotation.lastIndexOf('.') + 1);
       result.put(simpleName, annotation);
@@ -927,7 +930,6 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
 
   @Override
   public Void visitMemberReference(MemberReferenceTree node, Void unused) {
-    sync(node);
     builder.open(plusFour);
     scan(node.getQualifierExpression(), null);
     builder.breakOp();
@@ -1247,7 +1249,10 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
         token(",");
         builder.breakOp(" ");
       }
-      scan(parameter, null);
+      visitVariables(
+          ImmutableList.of(parameter),
+          DeclarationKind.NONE,
+          fieldAnnotationDirection(parameter.getModifiers()));
       first = false;
     }
     if (parens) {
@@ -2639,7 +2644,7 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
     for (ExpressionTree thrownExceptionType : thrownExceptionTypes) {
       if (!first) {
         token(",");
-        builder.breakToFill(" ");
+        builder.breakOp(" ");
       }
       scan(thrownExceptionType, null);
       first = false;
@@ -3558,7 +3563,7 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
           if (receiverExpression.isPresent()) {
             scan(receiverExpression.get(), null);
           } else {
-            visit(name);
+            variableName(name);
           }
           builder.op(op);
         }
@@ -3599,6 +3604,10 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
     }
 
     return baseDims;
+  }
+
+  protected void variableName(Name name) {
+    visit(name);
   }
 
   private void maybeAddDims(Deque<List<? extends AnnotationTree>> annotations) {
@@ -3691,7 +3700,7 @@ public class JavaInputAstVisitor extends TreePathScanner<Void, Void> {
       builder.breakOp(" ");
       builder.open(ZERO);
       maybeAddDims(dims);
-      visit(fragment.getName());
+      variableName(fragment.getName());
       maybeAddDims(dims);
       ExpressionTree initializer = fragment.getInitializer();
       if (initializer != null) {
