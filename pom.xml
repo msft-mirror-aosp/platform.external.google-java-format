@@ -27,7 +27,6 @@
 
   <modules>
     <module>core</module>
-    <module>eclipse_plugin</module>
   </modules>
 
   <name>Google Java Format Parent</name>
@@ -87,13 +86,13 @@
   <properties>
     <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
     <java.version>1.8</java.version>
-    <guava.version>31.0.1-jre</guava.version>
+    <guava.version>32.1.3-jre</guava.version>
     <truth.version>1.1.3</truth.version>
     <checker.version>3.21.2</checker.version>
-    <errorprone.version>2.11.0</errorprone.version>
+    <errorprone.version>2.16</errorprone.version>
     <auto-value.version>1.9</auto-value.version>
     <auto-service.version>1.0.1</auto-service.version>
-    <maven-javadoc-plugin.version>3.3.1</maven-javadoc-plugin.version>
+    <maven-javadoc-plugin.version>3.4.0</maven-javadoc-plugin.version>
     <maven-source-plugin.version>3.2.1</maven-source-plugin.version>
   </properties>
 
@@ -173,7 +172,7 @@
         </plugin>
         <plugin>
           <artifactId>maven-javadoc-plugin</artifactId>
-          <version>3.3.1</version>
+          <version>3.4.0</version>
         </plugin>
         <plugin>
           <artifactId>maven-gpg-plugin</artifactId>
@@ -198,13 +197,13 @@
             <!-- compile-time arguments for google-java-format -->
             <arg>-XDcompilePolicy=simple</arg>
             <arg>-Xplugin:ErrorProne</arg>
+            <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
+            <arg>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
             <arg>--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED</arg>
             <arg>--add-exports=jdk.compiler/com.sun.tools.javac.main=ALL-UNNAMED</arg>
             <arg>--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED</arg>
             <arg>--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED</arg>
             <arg>--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED</arg>
-            <arg>--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED</arg>
-            <arg>--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED</arg>
           </compilerArgs>
           <annotationProcessorPaths>
             <path>
@@ -233,6 +232,16 @@
             <manifest>
               <mainClass>com.google.googlejavaformat.java.Main</mainClass>
             </manifest>
+            <manifestEntries>
+              <Add-Exports><!--
+                -->jdk.compiler/com.sun.tools.javac.api <!--
+                -->jdk.compiler/com.sun.tools.javac.code <!--
+                -->jdk.compiler/com.sun.tools.javac.file <!--
+                -->jdk.compiler/com.sun.tools.javac.parser <!--
+                -->jdk.compiler/com.sun.tools.javac.tree <!--
+                -->jdk.compiler/com.sun.tools.javac.util<!--
+              --></Add-Exports>
+            </manifestEntries>
           </archive>
         </configuration>
       </plugin>
@@ -251,7 +260,7 @@
       <plugin>
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-javadoc-plugin</artifactId>
-        <version>3.3.1</version>
+        <version>3.4.0</version>
         <configuration>
           <doclint>none</doclint>
         </configuration>
@@ -348,6 +357,15 @@
           </plugin>
         </plugins>
       </build>
+    </profile>
+    <profile>
+      <id>eclipse</id>
+      <activation>
+        <jdk>[17,)</jdk>
+      </activation>
+      <modules>
+        <module>eclipse_plugin</module>
+      </modules>
     </profile>
   </profiles>
 </project>

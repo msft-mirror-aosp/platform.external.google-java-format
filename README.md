@@ -27,21 +27,6 @@ To reformat changed lines in a specific patch, use
 formatting. This is a deliberate design decision to unify our code formatting on
 a single format.*
 
-#### JDK 16
-
-The following flags are required when running on JDK 16, due to
-[JEP 396: Strongly Encapsulate JDK Internals by Default](https://openjdk.java.net/jeps/396):
-
-```
-java \
-  --add-exports jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED \
-  --add-exports jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED \
-  --add-exports jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED \
-  --add-exports jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED \
-  --add-exports jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED \
-  -jar google-java-format-${GJF_VERSION?}-all-deps.jar <options> [files...]
-```
-
 ### IntelliJ, Android Studio, and other JetBrains IDEs
 
 A
@@ -59,14 +44,25 @@ presented when you first open a project offering to do this for you.)
 To enable it by default in new projects, use `File→Other Settings→Default
 Settings...`.
 
-When enabled, it will replace the normal `Reformat Code` action, which can be
-triggered from the `Code` menu or with the Ctrl-Alt-L (by default) keyboard
-shortcut.
+When enabled, it will replace the normal `Reformat Code` and `Optimize Imports`
+actions.
 
-The import ordering is not handled by this plugin, unfortunately. To fix the
-import order, download the
-[IntelliJ Java Google Style file](https://raw.githubusercontent.com/google/styleguide/gh-pages/intellij-java-google-style.xml)
-and import it into File→Settings→Editor→Code Style.
+#### IntelliJ JRE Config
+
+The google-java-format plugin uses some internal classes that aren't available
+without extra configuration. To use the plugin, go to `Help→Edit Custom VM
+Options...` and paste in these lines:
+
+```
+--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+```
+
+Once you've done that, restart the IDE.
 
 ### Eclipse
 
@@ -87,16 +83,13 @@ Implementation`.
     *   [sherter/google-java-format-gradle-plugin](https://github.com/sherter/google-java-format-gradle-plugin)
 *   Apache Maven plugins
     *   [spotless](https://github.com/diffplug/spotless/tree/main/plugin-maven#google-java-format)
-    *   [coveo/fmt-maven-plugin](https://github.com/coveo/fmt-maven-plugin)
+    *   [spotify/fmt-maven-plugin](https://github.com/spotify/fmt-maven-plugin)
     *   [talios/googleformatter-maven-plugin](https://github.com/talios/googleformatter-maven-plugin)
     *   [Cosium/maven-git-code-format](https://github.com/Cosium/maven-git-code-format):
         A maven plugin that automatically deploys google-java-format as a
         pre-commit git hook.
 *   SBT plugins
     *   [sbt/sbt-java-formatter](https://github.com/sbt/sbt-java-formatter)
-*   [maltzj/google-style-precommit-hook](https://github.com/maltzj/google-style-precommit-hook):
-    A pre-commit (pre-commit.com) hook that will automatically run GJF whenever
-    you commit code to your repository
 *   [Github Actions](https://github.com/features/actions)
     *   [googlejavaformat-action](https://github.com/axel-op/googlejavaformat-action):
         Automatically format your Java files when you push on github
@@ -106,6 +99,19 @@ Implementation`.
 The formatter can be used in software which generates java to output more
 legible java code. Just include the library in your maven/gradle/etc.
 configuration.
+
+`google-java-format` uses internal javac APIs for parsing Java source. The
+following JVM flags are required when running on JDK 16 and newer, due to
+[JEP 396: Strongly Encapsulate JDK Internals by Default](https://openjdk.java.net/jeps/396):
+
+```
+--add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED
+--add-exports=jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED
+```
 
 #### Maven
 
