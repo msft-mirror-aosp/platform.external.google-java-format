@@ -31,9 +31,9 @@ import javax.swing.JComboBox;
 import javax.swing.JComponent;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
-import org.checkerframework.checker.nullness.qual.Nullable;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 class GoogleJavaFormatConfigurable extends BaseConfigurable implements SearchableConfigurable {
 
@@ -199,7 +199,9 @@ class GoogleJavaFormatConfigurable extends BaseConfigurable implements Searchabl
             false));
   }
 
-  /** @noinspection ALL */
+  /**
+   * @noinspection ALL
+   */
   public JComponent $$$getRootComponent$$$() {
     return panel;
   }

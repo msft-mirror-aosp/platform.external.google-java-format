@@ -37,10 +37,13 @@ import com.sun.tools.javac.file.JavacFileManager;
 import com.sun.tools.javac.parser.Tokens.TokenKind;
 import com.sun.tools.javac.tree.JCTree.JCCompilationUnit;
 import com.sun.tools.javac.util.Context;
+import com.sun.tools.javac.util.JCDiagnostic;
 import com.sun.tools.javac.util.Log;
 import com.sun.tools.javac.util.Log.DeferredDiagnosticHandler;
 import com.sun.tools.javac.util.Options;
 import java.io.IOException;
+import java.lang.reflect.Constructor;
+import java.lang.reflect.Method;
 import java.net.URI;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -53,6 +56,7 @@ import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
 import javax.tools.JavaFileObject.Kind;
 import javax.tools.SimpleJavaFileObject;
+import org.jspecify.annotations.Nullable;
 
 /** {@code JavaInput} extends {@link Input} to represent a Java input document. */
 public final class JavaInput extends Input {
@@ -362,9 +366,17 @@ public final class JavaInput extends Input {
             return text;
           }
         });
-    DeferredDiagnosticHandler diagnostics = new DeferredDiagnosticHandler(log);
+    DeferredDiagnosticHandler diagnostics = deferredDiagnosticHandler(log);
     ImmutableList<RawTok> rawToks = JavacTokens.getTokens(text, context, stopTokens);
-    if (diagnostics.getDiagnostics().stream().anyMatch(d -> d.getKind() == Diagnostic.Kind.ERROR)) {
+    Collection<JCDiagnostic> ds;
+    try {
+      @SuppressWarnings("unchecked")
+      var extraLocalForSuppression = (Collection<JCDiagnostic>) GET_DIAGNOSTICS.invoke(diagnostics);
+      ds = extraLocalForSuppression;
+    } catch (ReflectiveOperationException e) {
+      throw new LinkageError(e.getMessage(), e);
+    }
+    if (ds.stream().anyMatch(d -> d.getKind() == Diagnostic.Kind.ERROR)) {
       return ImmutableList.of(new Tok(0, "", "", 0, 0, true, null)); // EOF
     }
     int kN = 0;
@@ -387,14 +399,7 @@ public final class JavaInput extends Input {
       final boolean isNumbered; // Is this tok numbered? (tokens and comments)
       String extraNewline = null; // Extra newline at end?
       List<String> strings = new ArrayList<>();
-      if (tokText.startsWith("'")
-          || tokText.startsWith("\"")
-          || JavacTokens.isStringFragment(t.kind())) {
-        // Perform this check first, STRINGFRAGMENT tokens can start with arbitrary characters.
-        isToken = true;
-        isNumbered = true;
-        strings.add(originalTokText);
-      } else if (Character.isWhitespace(tokText0)) {
+      if (Character.isWhitespace(tokText0)) {
         isToken = false;
         isNumbered = false;
         Iterator<String> it = Newlines.lineIterator(originalTokText);
@@ -411,6 +416,10 @@ public final class JavaInput extends Input {
             strings.add(line);
           }
         }
+      } else if (tokText.startsWith("'") || tokText.startsWith("\"")) {
+        isToken = true;
+        isNumbered = true;
+        strings.add(originalTokText);
       } else if (tokText.startsWith("//") || tokText.startsWith("/*")) {
         // For compatibility with an earlier lexer, the newline after a // comment is its own tok.
         if (tokText.startsWith("//")
@@ -472,6 +481,39 @@ public final class JavaInput extends Input {
     }
     toks.add(new Tok(kN, "", "", charI, columnI, true, null)); // EOF tok.
     return ImmutableList.copyOf(toks);
+  }
+
+  private static final Constructor<DeferredDiagnosticHandler>
+      DEFERRED_DIAGNOSTIC_HANDLER_CONSTRUCTOR = getDeferredDiagnosticHandlerConstructor();
+
+  // Depending on the JDK version, we might have a static class whose constructor has an explicit
+  // Log parameter, or an inner class whose constructor has an *implicit* Log parameter. They are
+  // different at the source level, but look the same to reflection.
+
+  private static Constructor<DeferredDiagnosticHandler> getDeferredDiagnosticHandlerConstructor() {
+    try {
+      return DeferredDiagnosticHandler.class.getConstructor(Log.class);
+    } catch (NoSuchMethodException e) {
+      throw new LinkageError(e.getMessage(), e);
+    }
+  }
+
+  private static DeferredDiagnosticHandler deferredDiagnosticHandler(Log log) {
+    try {
+      return DEFERRED_DIAGNOSTIC_HANDLER_CONSTRUCTOR.newInstance(log);
+    } catch (ReflectiveOperationException e) {
+      throw new LinkageError(e.getMessage(), e);
+    }
+  }
+
+  private static final Method GET_DIAGNOSTICS = getGetDiagnostics();
+
+  private static @Nullable Method getGetDiagnostics() {
+    try {
+      return DeferredDiagnosticHandler.class.getMethod("getDiagnostics");
+    } catch (NoSuchMethodException e) {
+      throw new LinkageError(e.getMessage(), e);
+    }
   }
 
   private static int updateColumn(int columnI, String originalTokText) {
@@ -573,9 +615,11 @@ public final class JavaInput extends Input {
     if (characterRange.upperEndpoint() > text.length()) {
       throw new FormatterException(
           String.format(
-              "error: invalid length %d, offset + length (%d) is outside the file",
+              "error: invalid offset (%d) or length (%d); offset + length (%d) > file length (%d)",
+              characterRange.lowerEndpoint(),
               characterRange.upperEndpoint() - characterRange.lowerEndpoint(),
-              characterRange.upperEndpoint()));
+              characterRange.upperEndpoint(),
+              text.length()));
     }
     // empty range stands for "format the line under the cursor"
     Range<Integer> nonEmptyRange =

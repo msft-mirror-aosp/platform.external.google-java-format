@@ -14,53 +14,78 @@
  * limitations under the License.
  */
 
-plugins { id("org.jetbrains.intellij") version "1.15.0" }
+import org.jetbrains.intellij.platform.gradle.TestFrameworkType
 
-apply(plugin = "org.jetbrains.intellij")
+// https://github.com/JetBrains/intellij-platform-gradle-plugin/releases
+plugins {
+  id("org.jetbrains.intellij.platform") version "2.5.0"
+}
 
-apply(plugin = "java")
+repositories {
+  mavenCentral()
 
-repositories { mavenCentral() }
+  intellijPlatform {
+    defaultRepositories()
+  }
+}
 
-val googleJavaFormatVersion = "1.17.0"
+// https://github.com/google/google-java-format/releases
+val googleJavaFormatVersion = "1.27.0"
 
 java {
-  sourceCompatibility = JavaVersion.VERSION_11
-  targetCompatibility = JavaVersion.VERSION_11
+  sourceCompatibility = JavaVersion.VERSION_17
+  targetCompatibility = JavaVersion.VERSION_17
 }
 
-intellij {
-  pluginName.set("google-java-format")
-  plugins.set(listOf("java"))
-  version.set("2021.3")
-}
-
-tasks {
-  patchPluginXml {
-    version.set("${googleJavaFormatVersion}.0")
-    sinceBuild.set("213")
-    untilBuild.set("")
+intellijPlatform {
+  pluginConfiguration {
+    name = "google-java-format"
+    version = "${googleJavaFormatVersion}.0"
+    ideaVersion {
+      sinceBuild = "223"
+      untilBuild = provider { null }
+    }
   }
 
-  publishPlugin {
+  publishing {
     val jetbrainsPluginRepoToken: String by project
     token.set(jetbrainsPluginRepoToken)
   }
+}
 
+var gjfRequiredJvmArgs =
+      listOf(
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
+        "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
+      )
+
+tasks {
+  runIde {
+    jvmArgumentProviders += CommandLineArgumentProvider {
+      gjfRequiredJvmArgs
+    }
+  }
+}
+
+tasks {
   withType<Test>().configureEach {
-    jvmArgs(
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.code=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.file=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.parser=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.tree=ALL-UNNAMED",
-      "--add-exports", "jdk.compiler/com.sun.tools.javac.util=ALL-UNNAMED",
-    )
+    jvmArgs(gjfRequiredJvmArgs)
   }
 }
 
 dependencies {
+  intellijPlatform {
+    intellijIdeaCommunity("2022.3")
+    bundledPlugin("com.intellij.java")
+    testFramework(TestFrameworkType.Plugin.Java)
+  }
   implementation("com.google.googlejavaformat:google-java-format:${googleJavaFormatVersion}")
+  // https://mvnrepository.com/artifact/junit/junit
   testImplementation("junit:junit:4.13.2")
-  testImplementation("com.google.truth:truth:1.1.5")
+  // https://mvnrepository.com/artifact/com.google.truth/truth
+  testImplementation("com.google.truth:truth:1.4.4")
 }

@@ -15,7 +15,6 @@
 package com.google.googlejavaformat.java;
 
 import static com.google.common.truth.Truth.assertThat;
-import static com.google.common.truth.Truth8.assertThat;
 
 import java.io.PrintWriter;
 import java.io.StringWriter;
