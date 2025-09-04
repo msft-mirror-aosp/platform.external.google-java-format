@@ -57,11 +57,13 @@ java_library_host {
         "guava",
         "auto_service_annotations",
         "auto_value_annotations",
+        "jspecify",
     ],
     plugins: [
         "auto_oneof_plugin",
         "auto_service_plugin",
         "auto_value_plugin",
+        "auto_value_builder_plugin",
     ],
     javacflags: [
         "--add-modules=jdk.compiler",
