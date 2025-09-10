@@ -7,7 +7,7 @@
 
 ## Using the formatter
 
-### from the command-line
+### From the command-line
 
 [Download the formatter](https://github.com/google/google-java-format/releases)
 and run it with:
@@ -15,6 +15,12 @@ and run it with:
 ```
 java -jar /path/to/google-java-format-${GJF_VERSION?}-all-deps.jar <options> [files...]
 ```
+
+Note that it uses the `jdk.compiler` module to parse the Java source code. The
+`java` binary version used must therefore be from a JDK (not JRE) with a version
+equal to or newer than the Java language version of the files being formatted.
+The minimum Java version can be found in `core/pom.xml` (currently Java 17). An
+alternative is to use the available GraalVM based native binaries instead.
 
 The formatter can act on whole files, on limited lines (`--lines`), on specific
 offsets (`--offset`), passing through to standard-out (default) or altered
@@ -35,14 +41,14 @@ is available from the plugin repository. To install it, go to your IDE's
 settings and select the `Plugins` category. Click the `Marketplace` tab, search
 for the `google-java-format` plugin, and click the `Install` button.
 
-The plugin will be disabled by default. To enable it in the current project, go
-to `File→Settings...→google-java-format Settings` (or `IntelliJ
-IDEA→Preferences...→Other Settings→google-java-format Settings` on macOS) and
-check the `Enable google-java-format` checkbox. (A notification will be
-presented when you first open a project offering to do this for you.)
+The plugin will be disabled by default. To enable,
+[open the Project settings](https://www.jetbrains.com/help/idea/configure-project-settings.html),
+then click "google-java-format Settings" and check the "Enable
+google-java-format" checkbox.
 
-To enable it by default in new projects, use `File→Other Settings→Default
-Settings...`.
+To enable it by default in new projects,
+[open the default settings for new projects](https://www.jetbrains.com/help/idea/configure-project-settings.html#new-default-settings)
+and configure it under "Other Settings/google-java-format Settings".
 
 When enabled, it will replace the normal `Reformat Code` and `Optimize Imports`
 actions.
@@ -50,8 +56,9 @@ actions.
 #### IntelliJ JRE Config
 
 The google-java-format plugin uses some internal classes that aren't available
-without extra configuration. To use the plugin, go to `Help→Edit Custom VM
-Options...` and paste in these lines:
+without extra configuration. To use the plugin, you need to
+[add some options to your IDE's Java runtime](https://www.jetbrains.com/help/idea/tuning-the-ide.html#procedure-jvm-options).
+To do that, go to `Help→Edit Custom VM Options...` and paste in these lines:
 
 ```
 --add-exports=jdk.compiler/com.sun.tools.javac.api=ALL-UNNAMED
@@ -78,6 +85,8 @@ Implementation`.
 
 ### Third-party integrations
 
+*   Visual Studio Code
+    *   [google-java-format-for-vs-code](https://marketplace.visualstudio.com/items?itemName=JoseVSeb.google-java-format-for-vs-code)
 *   Gradle plugins
     *   [spotless](https://github.com/diffplug/spotless/tree/main/plugin-gradle#google-java-format)
     *   [sherter/google-java-format-gradle-plugin](https://github.com/sherter/google-java-format-gradle-plugin)

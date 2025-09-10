@@ -24,7 +24,7 @@ import javax.lang.model.element.Element;
 import javax.tools.FileObject;
 import javax.tools.JavaFileManager;
 import javax.tools.JavaFileObject;
-import org.checkerframework.checker.nullness.qual.Nullable;
+import org.jspecify.annotations.Nullable;
 
 /**
  * A decorating {@link Filer} implementation which formats Java source files with a {@link
@@ -37,7 +37,9 @@ public final class FormattingFiler implements Filer {
   private final Formatter formatter = new Formatter();
   private final Messager messager;
 
-  /** @param delegate filer to decorate */
+  /**
+   * @param delegate filer to decorate
+   */
   public FormattingFiler(Filer delegate) {
     this(delegate, null);
   }

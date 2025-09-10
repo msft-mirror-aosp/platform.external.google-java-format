@@ -15,7 +15,7 @@
 package com.google.googlejavaformat.java.java21;
 
 import com.google.googlejavaformat.OpsBuilder;
-import com.google.googlejavaformat.java.java17.Java17InputAstVisitor;
+import com.google.googlejavaformat.java.JavaInputAstVisitor;
 import com.sun.source.tree.CaseTree;
 import com.sun.source.tree.ConstantCaseLabelTree;
 import com.sun.source.tree.DeconstructionPatternTree;
@@ -23,14 +23,15 @@ import com.sun.source.tree.DefaultCaseLabelTree;
 import com.sun.source.tree.ExpressionTree;
 import com.sun.source.tree.PatternCaseLabelTree;
 import com.sun.source.tree.PatternTree;
-import com.sun.source.tree.StringTemplateTree;
+import com.sun.source.tree.Tree;
+import com.sun.tools.javac.tree.JCTree;
 import javax.lang.model.element.Name;
 
 /**
- * Extends {@link Java17InputAstVisitor} with support for AST nodes that were added or modified in
+ * Extends {@link JavaInputAstVisitor} with support for AST nodes that were added or modified in
  * Java 21.
  */
-public class Java21InputAstVisitor extends Java17InputAstVisitor {
+public class Java21InputAstVisitor extends JavaInputAstVisitor {
 
   public Java21InputAstVisitor(OpsBuilder builder, int indentMultiplier) {
     super(builder, indentMultiplier);
@@ -61,32 +62,21 @@ public class Java21InputAstVisitor extends Java17InputAstVisitor {
 
   @Override
   public Void visitDeconstructionPattern(DeconstructionPatternTree node, Void unused) {
-    sync(node);
     scan(node.getDeconstructor(), null);
     builder.open(plusFour);
     token("(");
     builder.breakOp();
-    boolean first = true;
+    boolean afterFirstToken = false;
     for (PatternTree pattern : node.getNestedPatterns()) {
-      if (!first) {
+      if (afterFirstToken) {
         token(",");
         builder.breakOp(" ");
       }
-      first = false;
+      afterFirstToken = true;
       scan(pattern, null);
     }
     builder.close();
     token(")");
-    return null;
-  }
-
-  @SuppressWarnings("preview")
-  @Override
-  public Void visitStringTemplate(StringTemplateTree node, Void aVoid) {
-    sync(node);
-    scan(node.getProcessor(), null);
-    token(".");
-    token(builder.peekToken().get());
     return null;
   }
 
@@ -97,5 +87,21 @@ public class Java21InputAstVisitor extends Java17InputAstVisitor {
     } else {
       visit(name);
     }
+  }
+
+  @Override
+  public Void scan(Tree tree, Void unused) {
+    // Pre-visit AST for preview features, since com.sun.source.tree.AnyPattern can't be
+    // accessed directly without --enable-preview.
+    if (tree instanceof JCTree.JCAnyPattern) {
+      visitJcAnyPattern((JCTree.JCAnyPattern) tree);
+      return null;
+    } else {
+      return super.scan(tree, null);
+    }
+  }
+
+  private void visitJcAnyPattern(JCTree.JCAnyPattern unused) {
+    token("_");
   }
 }
