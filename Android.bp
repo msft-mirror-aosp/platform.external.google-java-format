@@ -32,6 +32,7 @@ license {
 
 java_library_host {
     name: "google_java_format_android_annotation_stubs",
+    defaults: ["error_prone_dependency_defaults"],
     srcs: ["android-annotation-stubs/src/**/*.java"],
 }
 
@@ -46,6 +47,7 @@ filegroup {
 
 java_library_host {
     name: "google_java_format",
+    defaults: ["error_prone_dependency_defaults"],
     srcs: ["core/src/main/java/**/*.java"],
     exclude_srcs: [
         ":google_java_format_main_srcs",
