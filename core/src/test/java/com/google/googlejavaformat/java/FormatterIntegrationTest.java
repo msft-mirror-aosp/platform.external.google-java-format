@@ -48,10 +48,6 @@ public class FormatterIntegrationTest {
 
   private static final ImmutableMultimap<Integer, String> VERSIONED_TESTS =
       ImmutableMultimap.<Integer, String>builder()
-          .putAll(14, "I477", "Records", "RSLs", "Var", "ExpressionSwitch", "I574", "I594")
-          .putAll(15, "I603")
-          .putAll(16, "I588")
-          .putAll(17, "I683", "I684", "I696")
           .putAll(
               21,
               "SwitchGuardClause",
@@ -60,7 +56,9 @@ public class FormatterIntegrationTest {
               "SwitchUnderscore",
               "I880",
               "Unnamed",
-              "I981")
+              "I981",
+              "I1020",
+              "I1037")
           .build();
 
   @Parameters(name = "{index}: {0}")
@@ -102,10 +100,9 @@ public class FormatterIntegrationTest {
       String expectedOutput = outputs.get(fileName);
       Optional<Integer> version =
           VERSIONED_TESTS.inverse().get(fileName).stream().collect(toOptional());
-      if (Runtime.version().feature() < version.orElse(Integer.MAX_VALUE)) {
-        continue;
+      if (Runtime.version().feature() >= version.orElse(Integer.MIN_VALUE)) {
+        testInputs.add(new Object[] {fileName, input, expectedOutput});
       }
-      testInputs.add(new Object[] {fileName, input, expectedOutput});
     }
     return testInputs;
   }
@@ -129,6 +126,19 @@ public class FormatterIntegrationTest {
       String output = formatter.formatSource(input);
       output = StringWrapper.wrap(output, formatter);
       assertEquals("bad output for " + name, expected, output);
+    } catch (FormatterException e) {
+      fail(String.format("Formatter crashed on %s: %s", name, e.getMessage()));
+    }
+  }
+
+  @Test
+  public void idempotent() {
+    try {
+      Formatter formatter = new Formatter();
+      String formatted = formatter.formatSource(input);
+      formatted = StringWrapper.wrap(formatted, formatter);
+      String reformatted = formatter.formatSource(formatted);
+      assertEquals("bad output for " + name, formatted, reformatted);
     } catch (FormatterException e) {
       fail(String.format("Formatter crashed on %s: %s", name, e.getMessage()));
     }
