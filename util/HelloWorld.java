@@ -1,5 +1,5 @@
 /*
- * Copyright 2017 Google Inc.
+ * Copyright 2026 Google Inc.
  *
  * Licensed under the Apache License, Version 2.0 (the "License"); you may not use this file except
  * in compliance with the License. You may obtain a copy of the License at
@@ -12,11 +12,8 @@
  * the License.
  */
 
-package com.google.googlejavaformat.java;
-
-/** Runs the Google Java formatter on the given code. */
-public class GoogleJavaFormatter extends JavaFormatterBase {
-  public GoogleJavaFormatter() {
-    super(JavaFormatterOptions.defaultOptions());
+class HelloWorld {
+  public static void main(String[] args) {
+    System.out.println("Hello, World!");
   }
 }
